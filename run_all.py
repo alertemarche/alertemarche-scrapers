@@ -14,6 +14,7 @@ import sys
 from common import config
 from common.dedup import deduplicate
 from common.sender import send_log, send_tenders
+from scrapers.benin.private_scraper import build as build_benin_private
 from scrapers.benin.scraper import build as build_benin
 from scrapers.cote_ivoire.scraper import build as build_ci
 from scrapers.togo.scraper import build as build_togo
@@ -24,16 +25,20 @@ logging.basicConfig(
 )
 logger = logging.getLogger("scrapers.run")
 
+# Chaque pays possède une liste de ROBOTS INDÉPENDANTS (un par source).
+# Bénin : marchés publics (portail DNCMP) + marchés privés (UNGM/Nations Unies).
 BUILDERS = {
-    "BJ": build_benin,
-    "TG": build_togo,
-    "CI": build_ci,
+    "BJ": [build_benin, build_benin_private],
+    "TG": [build_togo],
+    "CI": [build_ci],
 }
 
 
-def run_country(code: str) -> dict:
-    scraper = BUILDERS[code]()
-    result = {"country": code, "source": scraper.source_name, "collected": 0, "new": 0, "status": "success"}
+def run_robot(code: str, builder) -> dict:
+    """Exécute un robot (une source) et journalise son exécution séparément."""
+    scraper = builder()
+    result = {"country": code, "source": scraper.source_name,
+              "collected": 0, "new": 0, "status": "success"}
     try:
         raw = scraper.run()
         items = deduplicate(raw)
@@ -44,10 +49,18 @@ def run_country(code: str) -> dict:
                  items_collected=len(items), items_new=result["new"],
                  message=f"{len(items)} opportunités uniques collectées.")
     except Exception as exc:  # noqa: BLE001
-        logger.exception("Échec de collecte pour %s : %s", code, exc)
+        logger.exception("Échec de collecte pour %s / %s : %s", code, scraper.source_name, exc)
         result["status"] = "failure"
         send_log(code, scraper.source_name, "failure", message=str(exc))
     return result
+
+
+def run_country(code: str) -> list[dict]:
+    """Exécute tous les robots (sources) d'un pays."""
+    results = []
+    for builder in BUILDERS[code]:
+        results.append(run_robot(code, builder))
+    return results
 
 
 def run_all(country: str | None = None) -> list[dict]:
@@ -58,7 +71,7 @@ def run_all(country: str | None = None) -> list[dict]:
             logger.error("Pays inconnu : %s", code)
             continue
         logger.info("=== Collecte %s ===", code)
-        results.append(run_country(code))
+        results.extend(run_country(code))
     logger.info("Résumé : %s", results)
     return results
 
