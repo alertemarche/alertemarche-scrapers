@@ -14,6 +14,8 @@ import sys
 from common import config
 from common.dedup import deduplicate
 from common.sender import send_log, send_tenders
+from scrapers.benin.avis_generaux_scraper import build as build_avis_generaux
+from scrapers.benin.plan_passation_scraper import build as build_plan_passation
 from scrapers.benin.private_scraper import build as build_benin_private
 from scrapers.benin.scraper import build as build_benin
 from scrapers.cote_ivoire.scraper import build as build_ci
@@ -28,7 +30,7 @@ logger = logging.getLogger("scrapers.run")
 # Chaque pays possède une liste de ROBOTS INDÉPENDANTS (un par source).
 # Bénin : marchés publics (portail DNCMP) + marchés privés (UNGM/Nations Unies).
 BUILDERS = {
-    "BJ": [build_benin, build_benin_private],
+    "BJ": [build_benin, build_benin_private, build_avis_generaux, build_plan_passation],
     "TG": [build_togo],
     "CI": [build_ci],
 }
