@@ -111,8 +111,16 @@ class PlanPassationScraper(ApiScraper):
 
         reference = row.get("reference") or None
 
+        # Montant estimé (budget prévisionnel officiel du PPM). On renvoie un
+        # entier propre en FCFA — surtout PAS "66939091.0" : le point décimal
+        # serait supprimé côté frontend et gonflerait le montant d'un facteur 10.
         montant = row.get("montantEstime")
-        estimated_amount = str(montant) if montant not in (None, "") else None
+        estimated_amount = None
+        if montant not in (None, ""):
+            try:
+                estimated_amount = str(int(round(float(montant))))
+            except (TypeError, ValueError):
+                estimated_amount = None
 
         market_type = self.fix_encoding(self._get(row, "typeMarche", "libelle"))
 

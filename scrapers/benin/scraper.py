@@ -19,6 +19,11 @@ logger = logging.getLogger("scrapers.benin")
 
 API_ROOT = "https://api.marches-publics.bj/v2/api/portail/appelsoffres"
 PORTAIL_LISTING = "https://www.marches-publics.bj/appels-doffres"
+# Page officielle « fiche » d'un avis : le portail (Angular) expose la route
+# /appels-doffres/{dosID} qui ouvre la fiche de l'avis avec le bouton
+# « TÉLÉCHARGER » du DAO. On y renvoie l'utilisateur pour qu'il télécharge
+# lui-même le dossier depuis la source officielle (jamais le PDF en direct).
+PORTAIL_DETAIL = "https://www.marches-publics.bj/appels-doffres/{dos_id}"
 PAGE_SIZE = 50
 MAX_PAGES = 20  # garde-fou (1000 avis max par passe)
 
@@ -54,15 +59,21 @@ class BeninScraper(ApiScraper):
         publication = row.get("dosDatePublication")       # YYYY-MM-DD
         nb_lots = row.get("dosNombreLots")
         dao_url = row.get("dosFichier")                   # lien PDF officiel
-        external_id = str(row.get("dosID") or ao.get("apoID") or "") or None
+        dos_id = row.get("dosID")
+        external_id = str(dos_id or ao.get("apoID") or "") or None
 
         try:
             nb_lots = int(nb_lots) if nb_lots not in (None, "") else None
         except (TypeError, ValueError):
             nb_lots = None
 
-        # Lien officiel : la fiche PDF si disponible, sinon la page portail.
-        source_url = dao_url or PORTAIL_LISTING
+        # Lien officiel : on renvoie vers la FICHE de l'avis sur le portail
+        # (page officielle), et non vers le fichier PDF en direct. L'utilisateur
+        # télécharge ainsi le DAO lui-même depuis la source officielle.
+        if dos_id is not None:
+            source_url = PORTAIL_DETAIL.format(dos_id=dos_id)
+        else:
+            source_url = PORTAIL_LISTING
 
         return self.make_item(
             title=title,
