@@ -15,9 +15,17 @@ from common import config
 from common.dedup import deduplicate
 from common.sender import send_log, send_tenders
 from scrapers.benin.avis_generaux_scraper import build as build_avis_generaux
+from scrapers.benin.bceao_scraper import build as build_bceao
+from scrapers.benin.cdc_scraper import build as build_cdc
+from scrapers.benin.mca_scraper import build as build_mca
 from scrapers.benin.plan_passation_scraper import build as build_plan_passation
+from scrapers.benin.pnud_scraper import build as build_pnud
 from scrapers.benin.private_scraper import build as build_benin_private
+from scrapers.benin.sbee_scraper import build as build_sbee
 from scrapers.benin.scraper import build as build_benin
+from scrapers.benin.simau_scraper import build as build_simau
+from scrapers.benin.sirat_scraper import build as build_sirat
+from scrapers.benin.unicef_scraper import build as build_unicef
 from scrapers.cote_ivoire.scraper import build as build_ci
 from scrapers.togo.scraper import build as build_togo
 
@@ -30,7 +38,13 @@ logger = logging.getLogger("scrapers.run")
 # Chaque pays possède une liste de ROBOTS INDÉPENDANTS (un par source).
 # Bénin : marchés publics (portail DNCMP) + marchés privés (UNGM/Nations Unies).
 BUILDERS = {
-    "BJ": [build_benin, build_benin_private, build_avis_generaux, build_plan_passation],
+    "BJ": [
+        build_benin, build_benin_private, build_avis_generaux, build_plan_passation,
+        # Sources publiques additionnelles (institutions d'État béninoises).
+        build_sbee, build_sirat, build_simau,
+        # Sources privées / institutionnelles.
+        build_cdc, build_bceao, build_mca, build_pnud, build_unicef,
+    ],
     "TG": [build_togo],
     "CI": [build_ci],
 }
