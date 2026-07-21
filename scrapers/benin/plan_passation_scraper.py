@@ -22,6 +22,7 @@ import logging
 import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date
+from urllib.parse import quote
 
 from common.api_base import ApiScraper
 from common import procedures
@@ -79,8 +80,11 @@ class PlanPassationScraper(ApiScraper):
     # ---- Étape 2 : réalisations d'une autorité ------------------------
     def _fetch_realisations(self, slug: str, annee: int) -> list[dict]:
         realisations: list[dict] = []
+        # Certains sigles d'autorités contiennent un « / » (ex. « PRODIJ/Aviculture »)
+        # qui casserait le chemin de l'URL : on encode le slug.
+        slug_enc = quote(slug, safe="-")
         for page in range(0, MAX_PAGES):
-            data = self.fetch_json(API_PLAN.format(slug=slug), params={
+            data = self.fetch_json(API_PLAN.format(slug=slug_enc), params={
                 "page": page, "size": PAGE_SIZE, "annee": annee,
             })
             if not isinstance(data, dict):

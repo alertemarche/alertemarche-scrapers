@@ -19,11 +19,14 @@ def _headers() -> dict:
     }
 
 
-def send_tenders(items: list[dict]) -> dict:
-    """POST /ingest/tenders. Retourne {received, new} ou lève une exception."""
-    if not items:
-        return {"received": 0, "new": 0}
+# Taille des lots d'ingestion. L'API traite chaque item (déduplication +
+# création + dispatch d'un job). Envoyer des milliers d'items en une seule
+# requête dépasse le timeout HTTP : on découpe en lots raisonnables.
+BATCH_SIZE = 150
 
+
+def _post_batch(items: list[dict]) -> dict:
+    """POST d'un lot unique vers /ingest/tenders, avec retries."""
     payload = {"items": items}
     last_error: Exception | None = None
 
@@ -36,15 +39,35 @@ def send_tenders(items: list[dict]) -> dict:
                 timeout=config.REQUEST_TIMEOUT,
             )
             resp.raise_for_status()
-            data = resp.json()
-            logger.info("Ingestion OK : %s reçus, %s nouveaux", data.get("received"), data.get("new"))
-            return data
+            return resp.json()
         except Exception as exc:  # noqa: BLE001
             last_error = exc
-            logger.warning("Échec d'envoi (tentative %s/%s) : %s", attempt, config.MAX_RETRIES, exc)
+            logger.warning("Échec d'envoi lot (tentative %s/%s) : %s", attempt, config.MAX_RETRIES, exc)
             time.sleep(2 * attempt)
 
-    raise RuntimeError(f"Impossible d'envoyer les opportunités : {last_error}")
+    raise RuntimeError(f"Impossible d'envoyer un lot d'opportunités : {last_error}")
+
+
+def send_tenders(items: list[dict]) -> dict:
+    """POST /ingest/tenders par lots. Retourne {received, new, updated} cumulés."""
+    if not items:
+        return {"received": 0, "new": 0}
+
+    total = {"received": 0, "new": 0, "updated": 0}
+    nb_batches = (len(items) + BATCH_SIZE - 1) // BATCH_SIZE
+
+    for i in range(0, len(items), BATCH_SIZE):
+        batch = items[i:i + BATCH_SIZE]
+        data = _post_batch(batch)
+        for k in ("received", "new", "updated"):
+            if data.get(k) is not None:
+                total[k] += int(data[k])
+        logger.info("Lot %s/%s ingéré : %s reçus, %s nouveaux",
+                    i // BATCH_SIZE + 1, nb_batches, data.get("received"), data.get("new"))
+
+    logger.info("Ingestion OK : %s reçus, %s nouveaux, %s mis à jour",
+                total["received"], total["new"], total.get("updated", 0))
+    return total
 
 
 def send_log(country: str, source_name: str, status: str,
