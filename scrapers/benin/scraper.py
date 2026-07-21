@@ -14,6 +14,7 @@ DAO (dao_url) est conservé, jamais le fichier.
 import logging
 
 from common.api_base import ApiScraper
+from common import procedures
 
 logger = logging.getLogger("scrapers.benin")
 
@@ -54,6 +55,19 @@ class BeninScraper(ApiScraper):
             or self.source_name
         reference = row.get("dosReference") or ao.get("apoReference")
         market_type = self.fix_encoding(self._get(ao, "typemarche", "libelle"))
+
+        # Type de procédure : l'API « appelsoffres » n'expose pas le mode de
+        # passation de façon structurée. On tente d'abord un éventuel code de
+        # procédure présent dans l'avis, puis on reconnaît la procédure à partir
+        # de l'objet/type d'avis (intitulés normalisés béninois).
+        proc_code = self._get(ao, "typeprocedure", "code") or self._get(ao, "modepassation", "code")
+        type_avis = self.fix_encoding(self._get(ao, "typeavis", "libelle"))
+        procedure_type = (
+            procedures.from_code(proc_code)
+            or procedures.from_text(type_avis)
+            or procedures.from_text(title)
+        )
+
         location = self.fix_encoding(row.get("doslieuacquisitiondao") or row.get("dosLieuDepotDossier"))
         deadline = row.get("dosDateLimiteDepot")          # YYYY-MM-DD
         publication = row.get("dosDatePublication")       # YYYY-MM-DD
@@ -84,6 +98,7 @@ class BeninScraper(ApiScraper):
             publication_date=publication,
             nb_lots=nb_lots,
             market_type=market_type,
+            procedure_type=procedure_type,
             dao_url=dao_url,
             source_url=source_url,
             external_id=external_id,

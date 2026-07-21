@@ -92,7 +92,8 @@ class ApiScraper:
                   estimated_amount: str | None = None, deadline: str | None = None,
                   publication_date: str | None = None, nb_lots: int | None = None,
                   market_type: str | None = None, dao_url: str | None = None,
-                  external_id: str | None = None, tender_type: str | None = None) -> dict:
+                  external_id: str | None = None, tender_type: str | None = None,
+                  procedure_type: str | None = None) -> dict:
         return {
             "title": (title or "")[:255],
             "institution": (institution or self.source_name)[:255],
@@ -105,6 +106,7 @@ class ApiScraper:
             "country": self.country,
             "type": tender_type or self.tender_type,
             "market_type": market_type,
+            "procedure_type": procedure_type,
             "source_name": self.source_name,
             "source_url": source_url,
             "dao_url": dao_url,

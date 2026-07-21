@@ -123,7 +123,7 @@ class BaseScraper:
 
     def make_item(self, title: str, institution: str, source_url: str,
                   deadline: str | None = None, estimated_amount: str | None = None,
-                  tender_type: str | None = None) -> dict:
+                  tender_type: str | None = None, procedure_type: str | None = None) -> dict:
         return {
             "title": title,
             "institution": institution or self.source_name,
@@ -131,6 +131,7 @@ class BaseScraper:
             "deadline": deadline,
             "country": self.country,
             "type": tender_type or self.tender_type,
+            "procedure_type": procedure_type,
             "source_name": self.source_name,
             "source_url": source_url,
         }

@@ -19,9 +19,12 @@ que les opérations dont l'échéance n'est pas encore passée.
 Seules des MÉTADONNÉES sont collectées ; aucun fichier n'est stocké.
 """
 import logging
+import os
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date
 
 from common.api_base import ApiScraper
+from common import procedures
 
 logger = logging.getLogger("scrapers.benin.plan_passation")
 
@@ -29,8 +32,13 @@ API_AUTORITES = "https://api.marches-publics.bj/v2/api/portail/plandepassations/
 API_PLAN = "https://api.marches-publics.bj/v2/api/portail/plandepassations/{slug}"
 PORTAIL_PLAN = "https://www.marches-publics.bj/plan-de-passation/{slug}"
 PAGE_SIZE = 50
-MAX_AUTORITES = 20   # première passe : on limite pour éviter les timeouts
-MAX_PAGES = 20       # garde-fou pagination (autorités et réalisations)
+# Nombre maximum d'autorités traitées. 0 (ou variable d'env <=0) = toutes les
+# autorités du plan de passation de l'année en cours (~279 en 2026). On couvre
+# ainsi l'intégralité des marchés planifiés/actifs, comme le fait la concurrence.
+MAX_AUTORITES = int(os.getenv("PPM_MAX_AUTORITES", "0"))
+# Nombre de requêtes autorités traitées en parallèle (I/O réseau).
+MAX_WORKERS = int(os.getenv("PPM_MAX_WORKERS", "8"))
+MAX_PAGES = 40       # garde-fou pagination (autorités et réalisations)
 
 
 class PlanPassationScraper(ApiScraper):
@@ -64,9 +72,9 @@ class PlanPassationScraper(ApiScraper):
             autorites.extend(content)
             if data.get("last") is True or len(content) < PAGE_SIZE:
                 break
-            if len(autorites) >= MAX_AUTORITES:
+            if MAX_AUTORITES > 0 and len(autorites) >= MAX_AUTORITES:
                 break
-        return autorites[:MAX_AUTORITES]
+        return autorites[:MAX_AUTORITES] if MAX_AUTORITES > 0 else autorites
 
     # ---- Étape 2 : réalisations d'une autorité ------------------------
     def _fetch_realisations(self, slug: str, annee: int) -> list[dict]:
@@ -124,6 +132,16 @@ class PlanPassationScraper(ApiScraper):
 
         market_type = self.fix_encoding(self._get(row, "typeMarche", "libelle"))
 
+        # Type de procédure de passation : on lit le code officiel du mode de
+        # passation (DC, DRP, AOO, AOI, AMI…) et on le rattache à l'une des
+        # sous-catégories « Appels d'offres publics ». Repli sur le libellé si
+        # le code est absent.
+        mode_code = self._get(row, "modepassation_ID", "code")
+        procedure_type = procedures.from_code(mode_code)
+        if procedure_type is None:
+            mode_libelle = self._get(row, "modepassation_ID", "libelle")
+            procedure_type = procedures.from_text(mode_libelle) or procedures.from_text(libelle)
+
         publication = row.get("datelancement")  # YYYY-MM-DD
 
         rid = row.get("idrealisations") or row.get("id_plan")
@@ -137,6 +155,7 @@ class PlanPassationScraper(ApiScraper):
             reference=reference,
             estimated_amount=estimated_amount,
             market_type=market_type,
+            procedure_type=procedure_type,
             deadline=deadline,
             publication_date=publication,
             source_url=source_url,
@@ -149,19 +168,34 @@ class PlanPassationScraper(ApiScraper):
         items: list[dict] = []
 
         autorites = self._fetch_autorites(annee)
-        logger.info("[BJ] Plans de passation — %s autorités à traiter", len(autorites))
+        logger.info("[BJ] Plans de passation — %s autorités à traiter (workers=%s)",
+                    len(autorites), MAX_WORKERS)
 
-        for aut in autorites:
-            sigle = aut.get("sigle")
-            aid = aut.get("id")
-            if not sigle or aid is None:
-                continue
-            slug = f"{sigle}-{aid}"
-            realisations = self._fetch_realisations(slug, annee)
-            for row in realisations:
-                mapped = self._map(row, slug, today)
-                if mapped:
-                    items.append(mapped)
+        # Slugs valides.
+        slugs = [
+            f"{aut['sigle']}-{aut['id']}"
+            for aut in autorites
+            if aut.get("sigle") and aut.get("id") is not None
+        ]
+
+        def _process(slug: str) -> list[dict]:
+            out: list[dict] = []
+            try:
+                for row in self._fetch_realisations(slug, annee):
+                    mapped = self._map(row, slug, today)
+                    if mapped:
+                        out.append(mapped)
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("[BJ] Plan de passation %s : %s", slug, exc)
+            return out
+
+        # Collecte parallèle (I/O réseau) sur l'ensemble des autorités.
+        with ThreadPoolExecutor(max_workers=max(1, MAX_WORKERS)) as pool:
+            futures = {pool.submit(_process, slug): slug for slug in slugs}
+            for fut in as_completed(futures):
+                items.extend(fut.result())
+
+        logger.info("[BJ] Plans de passation — %s opportunités actives/planifiées", len(items))
         return items
 
 
