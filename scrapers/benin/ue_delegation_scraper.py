@@ -21,6 +21,7 @@ logger = logging.getLogger("scrapers.benin.ue_delegation")
 
 LISTING_URL = "https://www.eeas.europa.eu/eeas/appel-d%E2%80%99offres_fr?f[0]=tender_site:Benin"
 BASE_URL = "https://www.eeas.europa.eu"
+MAX_ITEMS = 20  # Limite pour éviter de collecter des AO très anciens
 
 
 class UeDelegationScraper(HtmlScraper):
@@ -41,8 +42,12 @@ class UeDelegationScraper(HtmlScraper):
         # La page EEAS liste les appels d'offres sous forme de liens vers des
         # pages de détail. On identifie les liens spécifiques au Bénin via le
         # pattern d'URL `/delegations/benin/...`.
+        # Limite stricte pour éviter de collecter des dizaines d'avis anciens
         seen: set[str] = set()
         for link in soup.find_all("a", href=re.compile(r"/delegations/benin/")):
+            if len(items) >= MAX_ITEMS:
+                break  # Limite atteinte
+            
             href = link.get("href", "")
             if not href:
                 continue

@@ -13,6 +13,7 @@ le lien vers l'article officiel sont collectés — jamais le document lui-même
 """
 import logging
 import re
+from datetime import date, timedelta
 
 from common.html_base import HtmlScraper
 
@@ -79,10 +80,18 @@ class PlanInternationalScraper(HtmlScraper):
                 # La date est dans l'URL WordPress
                 publication = self._extract_date_from_url(href)
 
-                # On ne filtre PAS par date (contrairement aux scrapers avec échéance) :
-                # ce blog a un historique utile, et les avis restent pertinents pour
-                # référencement fournisseurs. Si besoin de filtrer par âge, on peut
-                # ajouter un seuil (ex. < 2 ans) mais le backend déduplique déjà.
+                # Filtre par date de publication : ne garder que les avis récents
+                # (< 90 jours) pour éviter de polluer le site avec des AO expirés
+                if publication:
+                    try:
+                        pub_date = date.fromisoformat(publication)
+                        cutoff_date = date.today() - timedelta(days=90)
+                        if pub_date < cutoff_date:
+                            # Avis trop ancien (> 90 jours), on le skip
+                            continue
+                    except (ValueError, TypeError):
+                        # Si la date est invalide, on garde l'item par sécurité
+                        pass
 
                 items.append(self.make_item(
                     title=title[:255],

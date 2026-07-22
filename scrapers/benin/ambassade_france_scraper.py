@@ -22,6 +22,7 @@ from common.html_base import HtmlScraper
 logger = logging.getLogger("scrapers.benin.ambassade_france")
 
 HOME_URL = "https://bj.diplomatie.gouv.fr/"
+MAX_ITEMS = 10  # Limite pour éviter de collecter des avis très anciens
 
 
 class AmbassadeFranceScraper(HtmlScraper):
@@ -51,6 +52,9 @@ class AmbassadeFranceScraper(HtmlScraper):
 
         seen: set[str] = set()
         for link in soup.find_all("a", href=True):
+            if len(items) >= MAX_ITEMS:
+                break  # Limite atteinte
+            
             href = link.get("href", "")
             if not href or href.startswith("#"):
                 continue
