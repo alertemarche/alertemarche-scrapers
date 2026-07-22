@@ -14,7 +14,11 @@ import sys
 from common import config
 from common.dedup import deduplicate
 from common.sender import send_log, send_tenders
+from scrapers.benin.afd_scraper import build as build_afd
 from scrapers.benin.avis_generaux_scraper import build as build_avis_generaux
+from scrapers.benin.bad_scraper import build as build_bad
+from scrapers.benin.banque_mondiale_scraper import build as build_banque_mondiale
+from scrapers.benin.banques_assurances_scraper import build as build_banques_assurances
 from scrapers.benin.bceao_scraper import build as build_bceao
 from scrapers.benin.cdc_scraper import build as build_cdc
 from scrapers.benin.mca_scraper import build as build_mca
@@ -44,6 +48,10 @@ BUILDERS = {
         build_sbee, build_sirat, build_simau,
         # Sources privées / institutionnelles.
         build_cdc, build_bceao, build_mca, build_pnud, build_unicef,
+        # Bailleurs internationaux (IFI) — marchés financés, acheteurs non étatiques.
+        build_banque_mondiale, build_afd, build_bad,
+        # Banques & compagnies d'assurance présentes au Bénin.
+        build_banques_assurances,
     ],
     "TG": [build_togo],
     "CI": [build_ci],
