@@ -15,6 +15,7 @@ import time
 import requests
 
 from . import config
+from .premium_detector import detect_premium
 
 logger = logging.getLogger("scrapers.api")
 
@@ -94,7 +95,7 @@ class ApiScraper:
                   market_type: str | None = None, dao_url: str | None = None,
                   external_id: str | None = None, tender_type: str | None = None,
                   procedure_type: str | None = None) -> dict:
-        return {
+        item = {
             "title": (title or "")[:255],
             "institution": (institution or self.source_name)[:255],
             "reference": (reference or None),
@@ -112,6 +113,8 @@ class ApiScraper:
             "dao_url": dao_url,
             "external_id": external_id,
         }
+        # Détection des opportunités « premium » (fort potentiel)
+        return detect_premium(item)
 
     # ---- À surcharger -------------------------------------------------
     def collect(self) -> list[dict]:

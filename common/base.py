@@ -124,7 +124,8 @@ class BaseScraper:
     def make_item(self, title: str, institution: str, source_url: str,
                   deadline: str | None = None, estimated_amount: str | None = None,
                   tender_type: str | None = None, procedure_type: str | None = None) -> dict:
-        return {
+        from .premium_detector import detect_premium
+        item = {
             "title": title,
             "institution": institution or self.source_name,
             "estimated_amount": estimated_amount,
@@ -135,6 +136,8 @@ class BaseScraper:
             "source_name": self.source_name,
             "source_url": source_url,
         }
+        # Détection des opportunités « premium » (fort potentiel)
+        return detect_premium(item)
 
     # ---- Exécution ----------------------------------------------------
     def run(self) -> list[dict]:
