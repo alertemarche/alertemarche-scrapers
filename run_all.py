@@ -15,6 +15,7 @@ from common import config
 from common.dedup import deduplicate
 from common.sender import send_log, send_tenders
 from scrapers.benin.afd_scraper import build as build_afd
+from scrapers.benin.ambassade_france_scraper import build as build_ambassade_france
 from scrapers.benin.avis_generaux_scraper import build as build_avis_generaux
 from scrapers.benin.bad_scraper import build as build_bad
 from scrapers.benin.banque_mondiale_scraper import build as build_banque_mondiale
@@ -22,6 +23,7 @@ from scrapers.benin.banques_assurances_scraper import build as build_banques_ass
 from scrapers.benin.bceao_scraper import build as build_bceao
 from scrapers.benin.cdc_scraper import build as build_cdc
 from scrapers.benin.mca_scraper import build as build_mca
+from scrapers.benin.plan_international_scraper import build as build_plan_international
 from scrapers.benin.plan_passation_scraper import build as build_plan_passation
 from scrapers.benin.pnud_scraper import build as build_pnud
 from scrapers.benin.private_scraper import build as build_benin_private
@@ -29,6 +31,7 @@ from scrapers.benin.sbee_scraper import build as build_sbee
 from scrapers.benin.scraper import build as build_benin
 from scrapers.benin.simau_scraper import build as build_simau
 from scrapers.benin.sirat_scraper import build as build_sirat
+from scrapers.benin.ue_delegation_scraper import build as build_ue_delegation
 from scrapers.benin.unicef_scraper import build as build_unicef
 from scrapers.cote_ivoire.scraper import build as build_ci
 from scrapers.togo.scraper import build as build_togo
@@ -52,6 +55,8 @@ BUILDERS = {
         build_banque_mondiale, build_afd, build_bad,
         # Banques & compagnies d'assurance présentes au Bénin.
         build_banques_assurances,
+        # ONG internationales et représentations diplomatiques.
+        build_plan_international, build_ue_delegation, build_ambassade_france,
     ],
     "TG": [build_togo],
     "CI": [build_ci],
