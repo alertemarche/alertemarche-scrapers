@@ -34,7 +34,14 @@ from scrapers.benin.sirat_scraper import build as build_sirat
 from scrapers.benin.ue_delegation_scraper import build as build_ue_delegation
 from scrapers.benin.unicef_scraper import build as build_unicef
 from scrapers.cote_ivoire.scraper import build as build_ci
+from scrapers.cote_ivoire.arcop_scraper import build as build_ci_arcop
+from scrapers.cote_ivoire.marchespublics_scraper import build as build_ci_marchespublics
 from scrapers.togo.scraper import build as build_togo
+from scrapers.togo.arcop_scraper import build as build_tg_arcop
+from scrapers.togo.cnct_scraper import build as build_tg_cnct
+from scrapers.togo.marchespublics_scraper import build as build_tg_marchespublics
+from scrapers.togo.otr_scraper import build as build_tg_otr
+from scrapers.togo.port_scraper import build as build_tg_port
 
 logging.basicConfig(
     level=getattr(logging, config.LOG_LEVEL, logging.INFO),
@@ -58,8 +65,17 @@ BUILDERS = {
         # ONG internationales et représentations diplomatiques.
         build_plan_international, build_ue_delegation, build_ambassade_france,
     ],
-    "TG": [build_togo],
-    "CI": [build_ci],
+    # Togo : portail national + ARCOP + OTR + CNCT + Port Autonome de Lomé.
+    "TG": [
+        build_togo,
+        build_tg_marchespublics, build_tg_arcop, build_tg_otr,
+        build_tg_cnct, build_tg_port,
+    ],
+    # Côte d'Ivoire : ANRMP (existant) + portail national + ARCOP.
+    "CI": [
+        build_ci,
+        build_ci_marchespublics, build_ci_arcop,
+    ],
 }
 
 
