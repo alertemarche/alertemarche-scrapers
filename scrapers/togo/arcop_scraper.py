@@ -27,6 +27,9 @@ class ArcopTgScraper(HtmlScraper):
         "https://arcop.tg/appels-doffres/",
     ]
 
+    # Nombre maximal de pages de détail visitées par passe (maîtrise du temps).
+    MAX_DETAILS = 40
+
     def collect(self) -> list[dict]:
         items: list[dict] = []
         seen: set[str] = set()
@@ -66,10 +69,23 @@ class ArcopTgScraper(HtmlScraper):
             if external_id:
                 seen.add(external_id)
 
+            # --- Enrichissement depuis la page de détail --------------
+            # Le texte de l'avis contient l'échéance (« … au plus tard le … »)
+            # et parfois un montant estimatif en FCFA, absents de la liste.
+            deadline = None
+            amount = None
+            if source_url.startswith("http") and len(items) < self.MAX_DETAILS:
+                detail = self.detail_text(source_url)
+                if detail:
+                    deadline = self.deadline_from_text(detail)
+                    amount = self.amount_from_text(detail)
+
             items.append(self.make_item(
                 title=title,
                 institution=self.source_name,
                 publication_date=pub,
+                deadline=deadline,
+                estimated_amount=amount,
                 source_url=source_url,
                 external_id=external_id,
             ))

@@ -67,7 +67,10 @@ class MarchesPublicsTgScraper(HtmlScraper):
                 if not title or len(title) < 10:
                     continue
                 joined = " ".join(texts)
-                deadline = self.parse_fr_date(joined)
+                # Priorité à l'échéance explicite (« au plus tard le … ») ;
+                # sinon, dernière date rencontrée dans la ligne.
+                deadline = self.deadline_from_text(joined) or self.parse_fr_date(joined)
+                amount = self.amount_from_text(joined)
                 link = row.find("a", href=True)
                 source_url = urljoin(base_url, link["href"]) if link else base
                 reference = None
@@ -81,6 +84,7 @@ class MarchesPublicsTgScraper(HtmlScraper):
                 items.append(self.make_item(
                     title=title, institution=self.source_name,
                     reference=reference, deadline=deadline,
+                    estimated_amount=amount,
                     source_url=source_url,
                 ))
         if items:
@@ -95,7 +99,8 @@ class MarchesPublicsTgScraper(HtmlScraper):
             if not title or len(title) < 10:
                 continue
             text = card.get_text(" ", strip=True)
-            deadline = self.parse_fr_date(text)
+            deadline = self.deadline_from_text(text) or self.parse_fr_date(text)
+            amount = self.amount_from_text(text)
             link = card.find("a", href=True)
             source_url = urljoin(base_url, link["href"]) if link else base
             key = source_url + "|" + title[:40]
@@ -104,7 +109,8 @@ class MarchesPublicsTgScraper(HtmlScraper):
             seen.add(key)
             items.append(self.make_item(
                 title=title, institution=self.source_name,
-                deadline=deadline, source_url=source_url,
+                deadline=deadline, estimated_amount=amount,
+                source_url=source_url,
             ))
         return items
 

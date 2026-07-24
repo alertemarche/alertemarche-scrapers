@@ -40,10 +40,14 @@ class AgerouteScraper(HtmlScraper):
         "https://ageroute.ci/appels-d-offres/avis-du-reseau-africatip",
     ]
 
+    # Nombre maximal de fiches de détail visitées par passe.
+    MAX_DETAILS = 40
+
     def collect(self) -> list[dict]:
         items: list[dict] = []
         seen: set[str] = set()
         pages_ok = 0
+        details_fetched = 0
 
         for listing in self.LISTING_URLS:
             soup = self.soup(listing)
@@ -79,11 +83,25 @@ class AgerouteScraper(HtmlScraper):
                 if m:
                     reference = self.clean(m.group(0))[:120]
 
+                # --- Enrichissement depuis la fiche de détail ---------
+                # L'échéance (« … au plus tard le … ») et parfois le montant
+                # estimatif en FCFA figurent dans le corps de l'avis.
+                deadline = None
+                amount = None
+                if details_fetched < self.MAX_DETAILS:
+                    detail = self.detail_text(full_url)
+                    details_fetched += 1
+                    if detail:
+                        deadline = self.deadline_from_text(detail)
+                        amount = self.amount_from_text(detail)
+
                 items.append(self.make_item(
                     title=title[:255],
                     institution=self.source_name,
                     reference=reference,
                     publication_date=pub,
+                    deadline=deadline,
+                    estimated_amount=amount,
                     source_url=full_url,
                     dao_url=full_url,
                     external_id=f"ageroute-{abs(hash(full_url)) % (10 ** 10)}",

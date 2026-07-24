@@ -77,6 +77,30 @@ class HtmlScraper(ApiScraper):
             return None
         return BeautifulSoup(html, "lxml")
 
+    def detail_text(self, url: str) -> str | None:
+        """Récupère et nettoie le corps textuel d'une page de détail d'avis.
+
+        Cible en priorité les conteneurs de contenu courants (WordPress et
+        thèmes classiques). Retourne le texte concaténé ou None si la page est
+        injoignable. Ne lève jamais d'exception.
+        """
+        s = self.soup(url)
+        if not s:
+            return None
+        # On retient le conteneur le PLUS riche en texte parmi les candidats
+        # usuels : selon les thèmes, `article` peut n'être qu'un encart tandis
+        # que le vrai contenu est dans `main` (ou l'inverse).
+        best = ""
+        for sel in ("div.entry-content", "div.post-content", "main",
+                    "article", "div#content", "div.content"):
+            for el in s.select(sel):
+                txt = el.get_text(" ", strip=True)
+                if len(txt) > len(best):
+                    best = txt
+        if not best:
+            best = s.get_text(" ", strip=True)
+        return self.clean(best)
+
     # ---- Dates --------------------------------------------------------
     @staticmethod
     def parse_fr_date(text: str) -> str | None:
@@ -120,6 +144,66 @@ class HtmlScraper(ApiScraper):
             if mo:
                 return HtmlScraper._safe(y, mo, d)
         return None
+
+    # Expressions signalant une date LIMITE de dépôt/remise des offres.
+    _DEADLINE_CUES = re.compile(
+        r"(?:au plus tard|date limite|dépôt des offres|depot des offres|"
+        r"remise des offres|dépôt des plis|depot des plis|clôture|cloture|"
+        r"date de clôture|date de cloture|reçues?\s+au plus tard|"
+        r"réceptionnées?|avant le|jusqu'au|ouverture des plis|"
+        r"soumission[s]?\s+.{0,30}?au plus tard)",
+        re.IGNORECASE,
+    )
+
+    def deadline_from_text(self, text: str | None) -> str | None:
+        """Extrait la date LIMITE de soumission depuis un texte narratif.
+
+        Cible en priorité les fragments qui suivent une expression de délai
+        (« au plus tard le … », « date limite … le … », « dépôt des offres … »)
+        afin d'éviter de confondre la date de publication avec l'échéance.
+        Retourne 'YYYY-MM-DD' ou None.
+        """
+        if not text:
+            return None
+        t = " ".join(str(text).split())
+        for m in self._DEADLINE_CUES.finditer(t):
+            # Fenêtre de 90 caractères après l'expression déclencheuse.
+            window = t[m.start():m.end() + 90]
+            d = self.parse_fr_date(window)
+            if d:
+                return d
+        return None
+
+    # Montants exprimés en francs CFA (avec séparateurs espace/point/virgule).
+    _AMOUNT_RE = re.compile(
+        r"(\d[\d\s.\u00a0]{4,}\d)\s*(?:F\s*CFA|FCFA|francs?\s+CFA|F\.?CFA|XOF)",
+        re.IGNORECASE,
+    )
+
+    def amount_from_text(self, text: str | None) -> str | None:
+        """Extrait un montant estimatif en FCFA depuis un texte -> 'X XXX XXX FCFA'.
+
+        Retenu uniquement si le nombre comporte au moins 6 chiffres (≥ 100 000),
+        pour écarter les faux positifs (années, quantités, numéros).
+        Retourne None si aucun montant plausible n'est trouvé.
+        """
+        if not text:
+            return None
+        t = " ".join(str(text).split())
+        best = None
+        for m in self._AMOUNT_RE.finditer(t):
+            digits = re.sub(r"\D", "", m.group(1))
+            if len(digits) < 6:
+                continue
+            value = int(digits)
+            # Bornes de plausibilité : entre 100 000 et 1 000 milliards FCFA.
+            if not (100_000 <= value <= 1_000_000_000_000):
+                continue
+            if best is None or value > best[0]:
+                # Reformate avec des espaces insécables fins pour la lisibilité.
+                pretty = f"{value:,}".replace(",", " ")
+                best = (value, f"{pretty} FCFA")
+        return best[1] if best else None
 
     @staticmethod
     def _safe(y: int, mo: int, d: int) -> str | None:

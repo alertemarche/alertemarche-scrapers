@@ -59,6 +59,9 @@ class MarchesPublicsCiScraper(HtmlScraper):
             deadline = self.parse_fr_date(cells[5].get_text(" ", strip=True))
             if not title or len(title) < 6:
                 continue
+            # Montant estimatif si présent dans la ligne (colonne facultative
+            # selon les mises à jour du portail).
+            amount = self.amount_from_text(row.get_text(" ", strip=True))
 
             external_id = f"mpci-{reference}" if reference else None
             key = external_id or (title[:60] + "|" + (deadline or ""))
@@ -73,6 +76,7 @@ class MarchesPublicsCiScraper(HtmlScraper):
                 market_type=market_type,
                 publication_date=pub,
                 deadline=deadline,
+                estimated_amount=amount,
                 source_url=base,
                 external_id=external_id,
             ))
