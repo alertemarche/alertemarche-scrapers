@@ -40,6 +40,10 @@ from scrapers.cote_ivoire.ungm_scraper import build as build_ci_ungm
 from scrapers.cote_ivoire.banque_mondiale_scraper import build as build_ci_banque_mondiale
 from scrapers.cote_ivoire.afd_scraper import build as build_ci_afd
 from scrapers.cote_ivoire.educarriere_scraper import build as build_ci_educarriere
+from scrapers.cote_ivoire.ageroute_scraper import build as build_ci_ageroute
+from scrapers.cote_ivoire.fer_scraper import build as build_ci_fer
+from scrapers.cote_ivoire.pnud_scraper import build as build_ci_pnud
+from scrapers.cote_ivoire.bad_scraper import build as build_ci_bad
 from scrapers.togo.scraper import build as build_togo
 from scrapers.togo.arcop_scraper import build as build_tg_arcop
 from scrapers.togo.cnct_scraper import build as build_tg_cnct
@@ -51,6 +55,9 @@ from scrapers.togo.ungm_scraper import build as build_tg_ungm
 from scrapers.togo.banque_mondiale_scraper import build as build_tg_banque_mondiale
 from scrapers.togo.afd_scraper import build as build_tg_afd
 from scrapers.togo.emploitogo_scraper import build as build_tg_emploitogo
+from scrapers.togo.pnud_scraper import build as build_tg_pnud
+from scrapers.togo.ue_delegation_scraper import build as build_tg_ue_delegation
+from scrapers.togo.bad_scraper import build as build_tg_bad
 
 logging.basicConfig(
     level=getattr(logging, config.LOG_LEVEL, logging.INFO),
@@ -84,6 +91,9 @@ BUILDERS = {
         build_tg_cnct, build_tg_port,
         # Bailleurs internationaux (marchés privés).
         build_tg_ungm, build_tg_banque_mondiale, build_tg_afd,
+        build_tg_pnud, build_tg_bad,
+        # ONG internationales et représentations diplomatiques.
+        build_tg_ue_delegation,
         # Plateforme privée d'appels d'offres (ONG, projets, institutions).
         build_tg_emploitogo,
     ],
@@ -91,10 +101,12 @@ BUILDERS = {
     # (UNGM/Nations Unies, Banque Mondiale, AFD).
     "CI": [
         build_ci,
-        # Sources publiques nationales.
+        # Sources publiques nationales (portail + institutions d'État).
         build_ci_marchespublics, build_ci_arcop,
+        build_ci_ageroute, build_ci_fer,
         # Bailleurs internationaux (marchés privés).
         build_ci_ungm, build_ci_banque_mondiale, build_ci_afd,
+        build_ci_pnud, build_ci_bad,
         # Plateforme privée d'appels d'offres (ONG, entreprises, cabinets).
         build_ci_educarriere,
     ],
