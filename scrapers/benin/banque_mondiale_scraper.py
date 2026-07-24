@@ -37,6 +37,10 @@ class BanqueMondialeScraper(ApiScraper):
     tender_type = "prive"
     method = "api"
 
+    # Nom du pays tel qu'attendu par l'API World Bank (`project_ctry_name`).
+    # Surchargé par les déclinaisons Côte d'Ivoire / Togo.
+    wb_country_name = "Benin"
+
     def __init__(self):
         super().__init__()
         self.session.headers.update({
@@ -121,7 +125,7 @@ class BanqueMondialeScraper(ApiScraper):
                 "format": "json",
                 "rows": PAGE_SIZE,
                 "os": page * PAGE_SIZE,
-                "project_ctry_name": "Benin",
+                "project_ctry_name": self.wb_country_name,
             })
             if not data:
                 break

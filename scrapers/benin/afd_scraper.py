@@ -38,6 +38,10 @@ class AfdScraper(HtmlScraper):
     tender_type = "prive"
     method = "html"
 
+    # Code ISO pays attendu par le portail AFD (`locationISO`).
+    # Surchargé par les déclinaisons Côte d'Ivoire (ci) / Togo (tg).
+    afd_iso = "bj"
+
     @staticmethod
     def _parse_date(raw: str | None) -> str | None:
         """« Jul 13, 2026 » / « Sept 10, 2026 » / « Aou 17, 2026 » -> ISO."""
@@ -93,7 +97,7 @@ class AfdScraper(HtmlScraper):
         items: list[dict] = []
         seen: set[str] = set()
         for page in range(1, MAX_PAGES + 1):
-            params = {"locationISO": "bj"}
+            params = {"locationISO": self.afd_iso}
             if page > 1:
                 params["pageNo"] = page
             soup = self.soup(LISTING, params=params)

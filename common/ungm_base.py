@@ -29,10 +29,12 @@ NOTICE_URL = "https://www.ungm.org/Public/Notice/{id}"
 PAGE_SIZE = 50
 MAX_PAGES = 10  # garde-fou
 
-# Identifiants UNGM des pays bénéficiaires (capturés depuis le portail).
-# BJ confirmé ; TG/CI à confirmer avant activation (extension future).
+# Identifiants UNGM des pays bénéficiaires (capturés depuis le portail
+# https://www.ungm.org/Public/Notice — attribut value des options du pays).
 UNGM_COUNTRY_IDS = {
     "BJ": "2314",  # Bénin — confirmé
+    "CI": "2341",  # Côte d'Ivoire — confirmé
+    "TG": "2494",  # Togo — confirmé
 }
 
 
