@@ -22,7 +22,16 @@ class MarchesPublicsSnScraper(HtmlScraper):
     def collect(self):
         """Collect tenders from the national portal"""
         items = []
-        
+
+        # Garde-fou : le portail marchespublics.sn est fréquemment injoignable
+        # (timeout TCP depuis certains réseaux / hors Sénégal). On teste d'abord
+        # la joignabilité pour éviter de longs retries inutiles ; la couverture
+        # nationale du Sénégal est assurée par senoffre.com (senoffre_scraper.py).
+        if not self.host_reachable(self.BASE_URL):
+            logging.warning(f"[{self.source_name}] portail injoignable — 0 item "
+                            "(couverture assurée par SenOffre).")
+            return items
+
         # URLs candidates pour la liste des marchés
         candidate_urls = [
             f"{self.BASE_URL}/appels-doffres",

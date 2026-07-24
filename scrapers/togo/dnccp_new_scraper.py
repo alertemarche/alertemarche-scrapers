@@ -111,12 +111,11 @@ class DnccpNewScraper(HtmlScraper):
         
         return self.make_item(
             title=title,
-            institution="",
+            institution=institution or self.source_name,
             deadline=deadline,
             source_url=source_url or self.LISTING_URL,
             external_id=external_id,
             reference=reference,
-            institution=institution,
         )
     
     def _parse_card(self, card):

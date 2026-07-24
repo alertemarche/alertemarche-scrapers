@@ -69,6 +69,7 @@ from scrapers.senegal.pnud_scraper import build as build_sn_pnud
 from scrapers.senegal.bad_scraper import build as build_sn_bad
 from scrapers.senegal.ue_delegation_scraper import build as build_sn_ue_delegation
 from scrapers.senegal.boad_scraper import build as build_sn_boad
+from scrapers.senegal.senoffre_scraper import build as build_sn_senoffre
 
 logging.basicConfig(
     level=getattr(logging, config.LOG_LEVEL, logging.INFO),
@@ -102,7 +103,10 @@ BUILDERS = {
         build_tg_dnccp,  # portail DNCCP — source publique principale
         # Portails gouvernementaux centralisés (NOUVEAUX - Phase 1).
         build_tg_service_public, build_tg_dnccp_new,
-        build_tg_marchespublics, build_tg_arcop, build_tg_otr,
+        # NB : build_tg_marchespublics retiré — le domaine marchespublics.tg
+        # n'est plus résolvable ; le portail public national est servi par
+        # DNCCP (build_tg_dnccp, API REST dnccp.gouv.tg) qui le remplace.
+        build_tg_arcop, build_tg_otr,
         build_tg_cnct, build_tg_port,
         # Bailleurs internationaux (marchés privés).
         build_tg_ungm, build_tg_banque_mondiale, build_tg_afd,
@@ -128,8 +132,11 @@ BUILDERS = {
     # Sénégal : portail national + bailleurs internationaux.
     # Volume attendu ~100-300 marchés fiables, similaire à TG/CI.
     "SN": [
-        # Portail national centralisé (NOUVEAU - Phase 1).
+        # Portail national centralisé (marchespublics.sn — repli si joignable).
         build_sn_marchespublics,
+        # Source nationale d'appels d'offres publics (SenOffre) — remplace de
+        # fait le portail officiel souvent injoignable hors Sénégal.
+        build_sn_senoffre,
         # Bailleurs internationaux (marchés privés).
         build_sn_ungm, build_sn_banque_mondiale, build_sn_pnud,
         build_sn_bad, build_sn_boad,

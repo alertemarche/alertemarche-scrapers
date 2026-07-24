@@ -40,6 +40,14 @@ class MarchesPublicsTgScraper(HtmlScraper):
     def collect(self) -> list[dict]:
         items: list[dict] = []
         seen: set[str] = set()
+        # Garde-fou : le domaine marchespublics.tg n'est plus résolvable/joignable
+        # (le portail public national du Togo est désormais servi par DNCCP,
+        # cf. scrapers/togo/dnccp_scraper.py via l'API REST dnccp.gouv.tg). On
+        # évite ainsi plusieurs cycles de retries longs pour un domaine mort.
+        if not any(self.host_reachable(u) for u in self.LISTING_URLS):
+            logger.warning("[TG] Marchés Publics TG injoignable (domaine mort) — "
+                           "0 item ; source couverte par DNCCP.")
+            return items
         soup = None
         base = self.LISTING_URLS[0]
         for url in self.LISTING_URLS:

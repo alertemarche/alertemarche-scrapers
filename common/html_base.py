@@ -71,6 +71,37 @@ class HtmlScraper(ApiScraper):
                 time.sleep(1.2 * attempt)
         return None
 
+    @staticmethod
+    def host_reachable(url: str, timeout: float = 6.0) -> bool:
+        """Vérifie rapidement qu'un hôte est résolvable ET accepte une connexion TCP.
+
+        Sert de garde-fou pour les portails dont le domaine peut avoir disparu
+        (DNS absent) ou être injoignable depuis le réseau : évite d'attendre
+        plusieurs cycles de retries longs (timeouts) pour rien. Ne lève jamais.
+        """
+        import socket
+        from urllib.parse import urlparse
+        try:
+            parsed = urlparse(url)
+            host = parsed.hostname
+            if not host:
+                return False
+            port = parsed.port or (443 if parsed.scheme == "https" else 80)
+            infos = socket.getaddrinfo(host, port, proto=socket.IPPROTO_TCP)
+            for family, socktype, proto, _canon, sockaddr in infos:
+                s = socket.socket(family, socktype, proto)
+                s.settimeout(timeout)
+                try:
+                    s.connect(sockaddr)
+                    return True
+                except OSError:
+                    continue
+                finally:
+                    s.close()
+            return False
+        except Exception:  # noqa: BLE001 — DNS absent, hôte inconnu, etc.
+            return False
+
     def soup(self, url: str, params: dict | None = None) -> BeautifulSoup | None:
         html = self.fetch_html(url, params=params)
         if not html:
