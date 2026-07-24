@@ -58,6 +58,12 @@ from scrapers.togo.emploitogo_scraper import build as build_tg_emploitogo
 from scrapers.togo.pnud_scraper import build as build_tg_pnud
 from scrapers.togo.ue_delegation_scraper import build as build_tg_ue_delegation
 from scrapers.togo.bad_scraper import build as build_tg_bad
+from scrapers.senegal.ungm_scraper import build as build_sn_ungm
+from scrapers.senegal.banque_mondiale_scraper import build as build_sn_banque_mondiale
+from scrapers.senegal.pnud_scraper import build as build_sn_pnud
+from scrapers.senegal.bad_scraper import build as build_sn_bad
+from scrapers.senegal.ue_delegation_scraper import build as build_sn_ue_delegation
+from scrapers.senegal.boad_scraper import build as build_sn_boad
 
 logging.basicConfig(
     level=getattr(logging, config.LOG_LEVEL, logging.INFO),
@@ -109,6 +115,15 @@ BUILDERS = {
         build_ci_pnud, build_ci_bad,
         # Plateforme privée d'appels d'offres (ONG, entreprises, cabinets).
         build_ci_educarriere,
+    ],
+    # Sénégal : bailleurs internationaux uniquement (portail national SYGMAP inaccessible).
+    # Volume attendu ~100-300 marchés fiables, similaire à TG/CI.
+    "SN": [
+        # Bailleurs internationaux (marchés privés).
+        build_sn_ungm, build_sn_banque_mondiale, build_sn_pnud,
+        build_sn_bad, build_sn_boad,
+        # ONG internationales et représentations diplomatiques.
+        build_sn_ue_delegation,
     ],
 }
 

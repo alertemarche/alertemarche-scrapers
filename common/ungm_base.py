@@ -34,6 +34,7 @@ MAX_PAGES = 10  # garde-fou
 UNGM_COUNTRY_IDS = {
     "BJ": "2314",  # Bénin — confirmé
     "CI": "2341",  # Côte d'Ivoire — confirmé
+    "SN": "2472",  # Sénégal — confirmé
     "TG": "2494",  # Togo — confirmé
 }
 
