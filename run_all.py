@@ -33,6 +33,8 @@ from scrapers.benin.simau_scraper import build as build_simau
 from scrapers.benin.sirat_scraper import build as build_sirat
 from scrapers.benin.ue_delegation_scraper import build as build_ue_delegation
 from scrapers.benin.unicef_scraper import build as build_unicef
+from scrapers.benin.gouv_scraper import build as build_gouv_bj
+from scrapers.benin.armp_scraper import build as build_armp_bj
 from scrapers.cote_ivoire.scraper import build as build_ci
 from scrapers.cote_ivoire.arcop_scraper import build as build_ci_arcop
 from scrapers.cote_ivoire.marchespublics_scraper import build as build_ci_marchespublics
@@ -58,7 +60,10 @@ from scrapers.togo.emploitogo_scraper import build as build_tg_emploitogo
 from scrapers.togo.pnud_scraper import build as build_tg_pnud
 from scrapers.togo.ue_delegation_scraper import build as build_tg_ue_delegation
 from scrapers.togo.bad_scraper import build as build_tg_bad
+from scrapers.togo.service_public_scraper import build as build_tg_service_public
+from scrapers.togo.dnccp_new_scraper import build as build_tg_dnccp_new
 from scrapers.senegal.ungm_scraper import build as build_sn_ungm
+from scrapers.senegal.marchespublics_scraper import build as build_sn_marchespublics
 from scrapers.senegal.banque_mondiale_scraper import build as build_sn_banque_mondiale
 from scrapers.senegal.pnud_scraper import build as build_sn_pnud
 from scrapers.senegal.bad_scraper import build as build_sn_bad
@@ -76,6 +81,8 @@ logger = logging.getLogger("scrapers.run")
 BUILDERS = {
     "BJ": [
         build_benin, build_benin_private, build_avis_generaux, build_plan_passation,
+        # Sources gouvernementales centralisées (NOUVEAUX - Phase 1).
+        build_gouv_bj, build_armp_bj,
         # Sources publiques additionnelles (institutions d'État béninoises).
         build_sbee, build_sirat, build_simau,
         # Sources privées / institutionnelles.
@@ -93,6 +100,8 @@ BUILDERS = {
         build_togo,
         # Sources publiques nationales.
         build_tg_dnccp,  # portail DNCCP — source publique principale
+        # Portails gouvernementaux centralisés (NOUVEAUX - Phase 1).
+        build_tg_service_public, build_tg_dnccp_new,
         build_tg_marchespublics, build_tg_arcop, build_tg_otr,
         build_tg_cnct, build_tg_port,
         # Bailleurs internationaux (marchés privés).
@@ -116,9 +125,11 @@ BUILDERS = {
         # Plateforme privée d'appels d'offres (ONG, entreprises, cabinets).
         build_ci_educarriere,
     ],
-    # Sénégal : bailleurs internationaux uniquement (portail national SYGMAP inaccessible).
+    # Sénégal : portail national + bailleurs internationaux.
     # Volume attendu ~100-300 marchés fiables, similaire à TG/CI.
     "SN": [
+        # Portail national centralisé (NOUVEAU - Phase 1).
+        build_sn_marchespublics,
         # Bailleurs internationaux (marchés privés).
         build_sn_ungm, build_sn_banque_mondiale, build_sn_pnud,
         build_sn_bad, build_sn_boad,
