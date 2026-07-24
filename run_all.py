@@ -39,6 +39,7 @@ from scrapers.cote_ivoire.marchespublics_scraper import build as build_ci_marche
 from scrapers.cote_ivoire.ungm_scraper import build as build_ci_ungm
 from scrapers.cote_ivoire.banque_mondiale_scraper import build as build_ci_banque_mondiale
 from scrapers.cote_ivoire.afd_scraper import build as build_ci_afd
+from scrapers.cote_ivoire.educarriere_scraper import build as build_ci_educarriere
 from scrapers.togo.scraper import build as build_togo
 from scrapers.togo.arcop_scraper import build as build_tg_arcop
 from scrapers.togo.cnct_scraper import build as build_tg_cnct
@@ -49,6 +50,7 @@ from scrapers.togo.dnccp_scraper import build as build_tg_dnccp
 from scrapers.togo.ungm_scraper import build as build_tg_ungm
 from scrapers.togo.banque_mondiale_scraper import build as build_tg_banque_mondiale
 from scrapers.togo.afd_scraper import build as build_tg_afd
+from scrapers.togo.emploitogo_scraper import build as build_tg_emploitogo
 
 logging.basicConfig(
     level=getattr(logging, config.LOG_LEVEL, logging.INFO),
@@ -82,6 +84,8 @@ BUILDERS = {
         build_tg_cnct, build_tg_port,
         # Bailleurs internationaux (marchés privés).
         build_tg_ungm, build_tg_banque_mondiale, build_tg_afd,
+        # Plateforme privée d'appels d'offres (ONG, projets, institutions).
+        build_tg_emploitogo,
     ],
     # Côte d'Ivoire : portail national + ARCOP + bailleurs internationaux
     # (UNGM/Nations Unies, Banque Mondiale, AFD).
@@ -91,6 +95,8 @@ BUILDERS = {
         build_ci_marchespublics, build_ci_arcop,
         # Bailleurs internationaux (marchés privés).
         build_ci_ungm, build_ci_banque_mondiale, build_ci_afd,
+        # Plateforme privée d'appels d'offres (ONG, entreprises, cabinets).
+        build_ci_educarriere,
     ],
 }
 
