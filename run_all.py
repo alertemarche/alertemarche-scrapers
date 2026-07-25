@@ -67,6 +67,7 @@ from scrapers.senegal.marchespublics_scraper import build as build_sn_marchespub
 from scrapers.senegal.senelec_scraper import build as build_sn_senelec
 from scrapers.senegal.pad_scraper import build as build_sn_pad
 from scrapers.senegal.ageroute_scraper import build as build_sn_ageroute
+from scrapers.senegal.artp_scraper import build as build_sn_artp
 from scrapers.senegal.banque_mondiale_scraper import build as build_sn_banque_mondiale
 from scrapers.senegal.pnud_scraper import build as build_sn_pnud
 from scrapers.senegal.bad_scraper import build as build_sn_bad
@@ -141,7 +142,7 @@ BUILDERS = {
         # fait le portail officiel souvent injoignable hors Sénégal.
         build_sn_senoffre,
         # Sociétés d'État & agences publiques sénégalaises (Phase 2).
-        build_sn_senelec, build_sn_pad, build_sn_ageroute,
+        build_sn_senelec, build_sn_pad, build_sn_ageroute, build_sn_artp,
         # Bailleurs internationaux (marchés privés).
         build_sn_ungm, build_sn_banque_mondiale, build_sn_pnud,
         build_sn_bad, build_sn_boad,
