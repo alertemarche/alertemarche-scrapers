@@ -56,6 +56,9 @@ class BaseScraper:
         self.base_url = config.SOURCES.get(self.country, "")
         self.session = requests.Session()
         self.session.headers.update({"User-Agent": config.USER_AGENT})
+        # Routage via le proxy rotatif Webshare (requêtes vers portails externes).
+        if config.PROXIES:
+            self.session.proxies.update(config.PROXIES)
 
     # ---- Réseau -------------------------------------------------------
     def fetch(self, url: str) -> str | None:

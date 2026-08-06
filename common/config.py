@@ -33,6 +33,27 @@ USER_AGENT = os.getenv("USER_AGENT", "AlerteMarcheBot/1.0 (+https://alertemarche
 REQUEST_TIMEOUT = _int("REQUEST_TIMEOUT", 30)
 MAX_RETRIES = _int("MAX_RETRIES", 3)
 
+# --- Proxy Webshare -------------------------------------------------
+# Les requêtes SORTANTES des robots (vers les portails externes) sont routées
+# via le proxy rotatif Webshare afin d'éviter les blocages géographiques et les
+# 401/403 des sources. L'ingestion vers le backend interne (http://app:8080/api)
+# n'utilise PAS de session partagée (voir common/sender.py) et n'est donc jamais
+# proxifiée ; l'hôte interne est en plus listé dans NO_PROXY par sécurité.
+PROXY_USER = os.getenv("WEBSHARE_PROXY_USER", "")
+PROXY_PASS = os.getenv("WEBSHARE_PROXY_PASS", "")
+PROXY_HOST = os.getenv("WEBSHARE_PROXY_HOST", "p.webshare.io")
+PROXY_PORT = os.getenv("WEBSHARE_PROXY_PORT", "80")
+
+PROXIES: dict | None = None
+if PROXY_USER and PROXY_PASS:
+    _proxy_url = f"http://{PROXY_USER}:{PROXY_PASS}@{PROXY_HOST}:{PROXY_PORT}"
+    PROXIES = {"http": _proxy_url, "https": _proxy_url}
+
+
+def get_proxies() -> dict | None:
+    """Retourne le mapping de proxies requests, ou None si non configuré."""
+    return PROXIES
+
 # Fréquence de collecte (minutes). Le cahier des charges prévoit ~2h.
 SCRAPE_INTERVAL_MINUTES = _int("SCRAPE_INTERVAL_MINUTES", 120)
 

@@ -32,6 +32,10 @@ class ApiScraper:
             "User-Agent": config.USER_AGENT,
             "Accept": "application/json",
         })
+        # Routage via le proxy rotatif Webshare (requêtes vers portails externes).
+        # HtmlScraper hérite de ce __init__ via super().__init__() : couvert aussi.
+        if config.PROXIES:
+            self.session.proxies.update(config.PROXIES)
 
     # ---- Réseau -------------------------------------------------------
     def fetch_json(self, url: str, params: dict | None = None):
