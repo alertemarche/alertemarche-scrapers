@@ -193,11 +193,38 @@ class BurkinaFasoScraper(HtmlScraper):
         title = title_match.group(1).strip() if title_match else None
         
         if not title or len(title) < 10:
-            # Tentative alternative : prendre les premières lignes significatives
+            # Tentative alternative : chercher des patterns spécifiques d'objets de marché
+            # Patterns positifs : "travaux", "fourniture", "construction", "acquisition", "réhabilitation"
             lines = [l.strip() for l in content.split('\n') if len(l.strip()) > 15]
-            title = lines[0] if lines else None
+            
+            # Filtrer les lignes qui ressemblent à des vrais objets de marché
+            for line in lines:
+                line_lower = line.lower()
+                # Mots-clés positifs (vrais objets de marché)
+                positive_keywords = ['travaux', 'fourniture', 'construction', 'acquisition', 
+                                     'réhabilitation', 'réalisation', 'service', 'prestation',
+                                     'aménagement', 'installation', 'étude', 'consultant']
+                # Patterns à rejeter (messages d'erreur, remarques, références)
+                reject_patterns = [
+                    r'^non[\s\-]',  # "Non conforme", "Non-respect"
+                    r'^n[°o]\s*\d',  # "N°3827", "No 123"
+                    r'conforme|conformité',  # Messages de conformité
+                    r'^prospectus',  # "prospectus non conforme"
+                    r'^offre\s+non',  # "offre non retenue"
+                    r'^lettre\s+de',  # "lettre de ..."
+                    r'^modèle',  # "modèle de ..."
+                ]
+                
+                # Rejeter si match un pattern négatif
+                if any(re.search(pattern, line_lower) for pattern in reject_patterns):
+                    continue
+                
+                # Accepter si contient un mot-clé positif
+                if any(kw in line_lower for kw in positive_keywords):
+                    title = line
+                    break
         
-        if not title:
+        if not title or len(title) < 10:
             return None
         
         title = self.fix_encoding(title[:500])  # Limiter la longueur
