@@ -33,6 +33,7 @@ MAX_PAGES = 10  # garde-fou
 # https://www.ungm.org/Public/Notice — attribut value des options du pays).
 UNGM_COUNTRY_IDS = {
     "BJ": "2314",  # Bénin — confirmé
+    "BF": "2324",  # Burkina Faso — confirmé
     "CI": "2341",  # Côte d'Ivoire — confirmé
     "SN": "2472",  # Sénégal — confirmé
     "TG": "2494",  # Togo — confirmé

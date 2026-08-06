@@ -74,6 +74,15 @@ from scrapers.senegal.bad_scraper import build as build_sn_bad
 from scrapers.senegal.ue_delegation_scraper import build as build_sn_ue_delegation
 from scrapers.senegal.boad_scraper import build as build_sn_boad
 from scrapers.senegal.senoffre_scraper import build as build_sn_senoffre
+from scrapers.burkina_faso.scraper import build as build_bf
+from scrapers.burkina_faso.plan_passation_scraper import build as build_bf_ppm
+from scrapers.burkina_faso.ungm_scraper import build as build_bf_ungm
+from scrapers.burkina_faso.banque_mondiale_scraper import build as build_bf_banque_mondiale
+from scrapers.burkina_faso.afd_scraper import build as build_bf_afd
+from scrapers.burkina_faso.pnud_scraper import build as build_bf_pnud
+from scrapers.burkina_faso.bad_scraper import build as build_bf_bad
+from scrapers.burkina_faso.boad_scraper import build as build_bf_boad
+from scrapers.burkina_faso.ue_delegation_scraper import build as build_bf_ue_delegation
 
 logging.basicConfig(
     level=getattr(logging, config.LOG_LEVEL, logging.INFO),
@@ -148,6 +157,19 @@ BUILDERS = {
         build_sn_bad, build_sn_boad,
         # ONG internationales et représentations diplomatiques.
         build_sn_ue_delegation,
+    ],
+    # Burkina Faso : source officielle nationale (DGCMEF — Quotidien des
+    # Marchés Publics + Plans de Passation) + bailleurs internationaux (marchés
+    # privés). Même architecture que les autres pays ; marchés actifs uniquement.
+    "BF": [
+        # Sources publiques nationales (DGCMEF).
+        build_bf,       # Quotidien des Marchés Publics (PDF officiel)
+        build_bf_ppm,   # Plans de Passation des Marchés (PPM)
+        # Bailleurs internationaux (marchés privés).
+        build_bf_ungm, build_bf_banque_mondiale, build_bf_afd,
+        build_bf_pnud, build_bf_bad, build_bf_boad,
+        # ONG internationales et représentations diplomatiques.
+        build_bf_ue_delegation,
     ],
 }
 

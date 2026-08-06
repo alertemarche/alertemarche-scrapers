@@ -349,10 +349,14 @@ class BurkinaFasoScraper(HtmlScraper):
             # 3. Parser chaque PDF
             for title, url in pdf_links:
                 pdf_items = self._parse_pdf_content(url, title)
-                items.extend(pdf_items)
-                logger.info(f"Extrait {len(pdf_items)} AO depuis {title}")
+                # On ne conserve que les marchés ACTIFS (échéance future ou
+                # absente) — cohérent avec le fonctionnement des autres pays.
+                active = [it for it in pdf_items if self.is_active(it.get("deadline"))]
+                items.extend(active)
+                logger.info(
+                    f"Extrait {len(active)}/{len(pdf_items)} AO actifs depuis {title}")
             
-            logger.info(f"Total : {len(items)} appels d'offres collectés pour le Burkina Faso")
+            logger.info(f"Total : {len(items)} appels d'offres actifs collectés pour le Burkina Faso")
             
         except Exception as e:
             logger.error(f"Erreur lors de la collecte Burkina Faso : {e}")
