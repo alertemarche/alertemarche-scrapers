@@ -66,6 +66,17 @@ _REJECT_PATTERNS = [
     r"soumissionnaire",               # tableaux de soumissionnaires
     r"attributaire",                  # décisions d'attribution
     r"proc[èe]s[\s\-]verbal",         # procès-verbaux
+    # --- Fragments : débuts par article/préposition (lignes tronquées) ---
+    r"^(le|la|les|un|une|des|du|de|pour|avec|dans|au|aux|et|par|à)\s",
+    r"^d['\u2019]",                   # "d'un...", "de l'offre..."
+    # --- Lignes d'attribution / exécution (pas des objets d'AO) ---
+    r"montant\s+de",                  # "... pour un montant de : ..."
+    r"d[ée]lai\s+de\s+livraison",     # "délai de livraison de 60 jours"
+    r"d[ée]lai\s+d['\u2019]ex[ée]cution",
+    # --- Noms d'institutions / autorités contractantes (pas des objets) ---
+    r"soci[ée]t[ée]\s+nationale",     # "SOCIETE NATIONALE D'AMENAGEMENT..."
+    r"service\s+national",            # "SERVICE NATIONAL POUR LE DEVELOPPEMENT"
+    r"directeur\s+g[ée]n[ée]ral",     # "Le Directeur Général du Contrôle..."
 ]
 
 
