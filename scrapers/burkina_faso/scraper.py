@@ -154,7 +154,7 @@ class BurkinaFasoScraper(HtmlScraper):
         
         # Découpage du texte en sections (chaque AO commence souvent par un numéro)
         # Pattern commun : "AVIS N° XXX" ou "Avis d'Appel d'Offres N° XXX"
-        ao_pattern = r'AVIS\s+(?:D[\'']APPEL\s+D[\'']OFFRES?\s+)?N[°O]\s*[:\s]*(\S+)'
+        ao_pattern = r'AVIS\s+(?:D[\'\u2019]APPEL\s+D[\'\u2019]OFFRES?\s+)?N[°O]\s*[:\s]*(\S+)'
         sections = re.split(ao_pattern, text, flags=re.IGNORECASE)
         
         # Traiter chaque section (en sautant le préambule)
@@ -204,7 +204,7 @@ class BurkinaFasoScraper(HtmlScraper):
         
         # Extraction de l'autorité contractante
         institution_match = re.search(
-            r'(?:Autorit[ée]\s+contractante|Ma[îi]tre\s+d[\'']ouvrage|MAITRISE\s+D[\'']OUVRAGE)\s*[:\-]\s*(.+?)(?:\n|OBJET)',
+            r'(?:Autorit[ée]\s+contractante|Ma[îi]tre\s+d[\'\u2019]ouvrage|MAITRISE\s+D[\'\u2019]OUVRAGE)\s*[:\-]\s*(.+?)(?:\n|OBJET)',
             content,
             re.IGNORECASE | re.DOTALL
         )
