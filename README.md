@@ -3,7 +3,7 @@
 ![AlerteMarché](https://img.shields.io/badge/AlerteMarch%C3%A9-by%20PRO%20BENIN%20SARL-1a7f5a?style=for-the-badge)
 ![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white)
 
-Robots de collecte de **AlerteMarché**, la plateforme SaaS de veille intelligente pour les appels d'offres au **Bénin**, **Togo** et **Côte d'Ivoire**.
+Robots de collecte de **AlerteMarché**, la plateforme SaaS de veille intelligente pour les appels d'offres au **Bénin**, **Togo**, **Côte d'Ivoire** et **Sénégal**.
 
 ## À propos
 
