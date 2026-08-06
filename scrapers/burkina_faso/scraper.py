@@ -28,6 +28,69 @@ PORTAIL_LISTING = "https://www.dgcmef.gov.bf/fr/appels-d-offre"
 MAX_DAYS_BACK = 3  # Nombre de jours à remonter dans l'historique
 BASE_URL = "https://www.dgcmef.gov.bf"
 
+# ---------------------------------------------------------------------------
+# Validation des titres — le quotidien DGCMEF contient des appels d'offres MAIS
+# aussi des sections « résultats / attribution / évaluation » qui polluent
+# l'extraction (motifs de rejet, noms de sociétés, montants, etc.).
+# Un vrai objet de marché DOIT contenir un mot-clé d'objet ET ne pas
+# correspondre à un motif de rejet.
+# ---------------------------------------------------------------------------
+
+# Mots-clés indiquant un VRAI objet de marché (appel d'offres actif)
+_POSITIVE_KEYWORDS = [
+    "travaux", "fourniture", "construction", "acquisition", "réhabilitation",
+    "rehabilitation", "réalisation", "realisation", "prestation", "service",
+    "aménagement", "amenagement", "installation", "étude", "etude",
+    "consultant", "recrutement", "entretien", "équipement", "equipement",
+    "contrôle", "controle", "surveillance", "livraison", "maintenance",
+    "achat", "location", "assistance", "formation", "manifestation d'intérêt",
+    "manifestation d'interet", "appel d'offres", "appel à candidature",
+    "confection", "reprographie", "gardiennage", "nettoyage", "transport",
+]
+
+# Motifs de rejet (sections résultats/évaluation, noms de sociétés, fragments)
+_REJECT_PATTERNS = [
+    r"offre\s+anormalement",          # "Offre anormalement basse"
+    r"non[\s\-]*respect",             # "Non-respect du délai..."
+    r"non\s+conforme",                # "Non conforme"
+    r"\bconforme\b",                  # "... Conforme" (attribution)
+    r"garantie\s+de\s+soumission",    # "Garantie de soumission non fournie"
+    r"d[ée]lai\s+de\s+validit[ée]",   # "Délai de validité de l'offre..."
+    r"^prospectus",                   # "prospectus non conforme"
+    r"march[ée]s?\s+de\s+prestations\s+intellectuelles",
+    r"^\s*n[°o]\s*\d",                # "N°3827"
+    r"^\s*[\d\s]+$",                  # que des chiffres/espaces (montants)
+    r"^\s*\d[\d\s.]+conforme",        # "107 002 400 Conforme"
+    r"\b(sarl|suarl|s\.a\.r\.l|sas|e\.?t\.?s|établissement)\b",  # sociétés
+    r"^\s*[•\-\*·]",                  # commence par une puce/tiret
+    r"soumissionnaire",               # tableaux de soumissionnaires
+    r"attributaire",                  # décisions d'attribution
+    r"proc[èe]s[\s\-]verbal",         # procès-verbaux
+]
+
+
+def _looks_like_tender_object(title: str | None) -> bool:
+    """Vérifie qu'un titre correspond bien à un objet d'appel d'offres actif.
+
+    Règle : le titre doit contenir au moins un mot-clé d'objet de marché ET
+    ne correspondre à aucun motif de rejet (résultats, évaluations, sociétés).
+    """
+    if not title:
+        return False
+    t = title.strip().lower()
+    if len(t) < 12:
+        return False
+    # Un vrai objet de marché est descriptif (>= 4 mots) ; les noms de
+    # sociétés / fragments sont courts (ex. "SODGIA SERVICES").
+    if len(t.split()) < 4:
+        return False
+    # Rejet immédiat si l'un des motifs négatifs correspond
+    for pattern in _REJECT_PATTERNS:
+        if re.search(pattern, t):
+            return False
+    # Doit contenir au moins un mot-clé positif
+    return any(kw in t for kw in _POSITIVE_KEYWORDS)
+
 
 class BurkinaFasoScraper(HtmlScraper):
     country = "BF"
@@ -192,39 +255,18 @@ class BurkinaFasoScraper(HtmlScraper):
         title_match = re.search(r'OBJET\s*[:\-]\s*(.+?)(?:\n|Lot|Mode|Financement|Date)', content, re.IGNORECASE | re.DOTALL)
         title = title_match.group(1).strip() if title_match else None
         
-        if not title or len(title) < 10:
-            # Tentative alternative : chercher des patterns spécifiques d'objets de marché
-            # Patterns positifs : "travaux", "fourniture", "construction", "acquisition", "réhabilitation"
+        if not title or not _looks_like_tender_object(title):
+            # Tentative alternative : chercher la première ligne qui ressemble
+            # vraiment à un objet de marché (validation stricte centralisée).
+            title = None
             lines = [l.strip() for l in content.split('\n') if len(l.strip()) > 15]
-            
-            # Filtrer les lignes qui ressemblent à des vrais objets de marché
             for line in lines:
-                line_lower = line.lower()
-                # Mots-clés positifs (vrais objets de marché)
-                positive_keywords = ['travaux', 'fourniture', 'construction', 'acquisition', 
-                                     'réhabilitation', 'réalisation', 'service', 'prestation',
-                                     'aménagement', 'installation', 'étude', 'consultant']
-                # Patterns à rejeter (messages d'erreur, remarques, références)
-                reject_patterns = [
-                    r'^non[\s\-]',  # "Non conforme", "Non-respect"
-                    r'^n[°o]\s*\d',  # "N°3827", "No 123"
-                    r'conforme|conformité',  # Messages de conformité
-                    r'^prospectus',  # "prospectus non conforme"
-                    r'^offre\s+non',  # "offre non retenue"
-                    r'^lettre\s+de',  # "lettre de ..."
-                    r'^modèle',  # "modèle de ..."
-                ]
-                
-                # Rejeter si match un pattern négatif
-                if any(re.search(pattern, line_lower) for pattern in reject_patterns):
-                    continue
-                
-                # Accepter si contient un mot-clé positif
-                if any(kw in line_lower for kw in positive_keywords):
+                if _looks_like_tender_object(line):
                     title = line
                     break
-        
-        if not title or len(title) < 10:
+
+        # Validation finale : rejeter tout titre qui n'est pas un vrai objet de marché
+        if not _looks_like_tender_object(title):
             return None
         
         title = self.fix_encoding(title[:500])  # Limiter la longueur
@@ -341,12 +383,17 @@ class BurkinaFasoScraper(HtmlScraper):
             if not any(re.search(kw, para, re.IGNORECASE) for kw in keywords):
                 continue
             
-            # Extraction basique
+            # Extraction basique : chercher la première ligne qui ressemble
+            # vraiment à un objet de marché (validation stricte centralisée).
             lines = [l.strip() for l in para.split('\n') if len(l.strip()) > 10]
             if len(lines) < 2:
                 continue
-            
-            title = self.fix_encoding(lines[0][:500])
+
+            title = next((l for l in lines if _looks_like_tender_object(l)), None)
+            if not title:
+                continue  # Aucun objet de marché valide dans ce paragraphe
+
+            title = self.fix_encoding(title[:500])
             
             item = self.make_item(
                 title=title,
