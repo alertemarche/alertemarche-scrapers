@@ -61,6 +61,17 @@ class UeDelegationBfScraper(HtmlScraper):
             if not title or len(title) < 10:
                 title = "Appel d'offres Délégation UE Burkina Faso"
 
+            # Filtrage des titres non pertinents (plans programmés, prospections, etc.)
+            title_lower = title.lower()
+            reject_patterns = [
+                r'appels?\s+d.offres?\s+programm[ée]s?\s+(en\s+)?\d{4}',  # "Appels d'offres programmés en 2025"
+                r'prospection\s+immobili[èe]re',  # "Prospection immobilière"
+                r'^plan\s+de\s+passation',  # "Plan de passation"
+                r'programme\s+indicatif',  # "Programme indicatif"
+            ]
+            if any(re.search(pattern, title_lower) for pattern in reject_patterns):
+                continue
+
             items.append(self.make_item(
                 title=title[:255],
                 institution=self.source_name,
