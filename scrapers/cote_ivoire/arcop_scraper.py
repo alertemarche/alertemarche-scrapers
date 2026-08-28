@@ -12,6 +12,7 @@ collectés.
 """
 import logging
 import re
+from datetime import datetime, timedelta
 from urllib.parse import urljoin
 
 logger = logging.getLogger("scrapers.cote_ivoire.arcop")
@@ -79,6 +80,16 @@ class ArcopCiScraper(HtmlScraper):
                 continue
             if external_id:
                 seen.add(external_id)
+
+            # Filtrer les publications trop anciennes (>180 jours)
+            # car ARCOP ne fournit pas de deadline explicite
+            if pub:
+                try:
+                    pub_date = datetime.strptime(pub, "%Y-%m-%d").date()
+                    if pub_date < (datetime.now().date() - timedelta(days=180)):
+                        continue  # Publication trop ancienne, probablement expirée
+                except (ValueError, TypeError):
+                    pass  # Si parsing échoue, on garde le marché
 
             items.append(self.make_item(
                 title=title,

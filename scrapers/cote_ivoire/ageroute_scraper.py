@@ -95,6 +95,10 @@ class AgerouteScraper(HtmlScraper):
                         deadline = self.deadline_from_text(detail)
                         amount = self.amount_from_text(detail)
 
+                # Ne garder que les marchés actifs (deadline future ou absente)
+                if not self.is_active(deadline):
+                    continue
+
                 items.append(self.make_item(
                     title=title[:255],
                     institution=self.source_name,

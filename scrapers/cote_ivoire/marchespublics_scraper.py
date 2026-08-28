@@ -63,6 +63,10 @@ class MarchesPublicsCiScraper(HtmlScraper):
             # selon les mises à jour du portail).
             amount = self.amount_from_text(row.get_text(" ", strip=True))
 
+            # Ne garder que les marchés actifs (deadline future ou absente)
+            if not self.is_active(deadline):
+                continue
+
             external_id = f"mpci-{reference}" if reference else None
             key = external_id or (title[:60] + "|" + (deadline or ""))
             if key in seen:

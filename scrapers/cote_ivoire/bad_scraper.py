@@ -143,6 +143,11 @@ class BadCiScraper(HtmlScraper):
                 if len(ptext) <= 400:
                     deadline = (self.deadline_from_text(ptext)
                                 or self.parse_fr_date(ptext))
+            
+            # Ne garder que les avis actifs (deadline future ou absente)
+            if not self.is_active(deadline):
+                continue
+            
             items.append(self.make_item(
                 title=title[:255],
                 institution=self.source_name,

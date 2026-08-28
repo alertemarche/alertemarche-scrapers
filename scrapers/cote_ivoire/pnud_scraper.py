@@ -52,6 +52,10 @@ class PnudCiScraper(HtmlScraper):
             deadline = self.parse_fr_date(self._field(text, "Deadline", stops) or "")
             pub = self.parse_fr_date(self._field(text, "Posted", stops) or "")
 
+            # Ne garder que les avis actifs (deadline future ou absente)
+            if not self.is_active(deadline):
+                continue
+
             href = row.get("href", "")
             source_url = urljoin(self.PORTAL, href) if href else self.PORTAL
 

@@ -84,6 +84,17 @@ class FerScraper(HtmlScraper):
 
                 pub = self.parse_fr_date(ctx)
 
+                # Filtrer les publications trop anciennes (>180 jours)
+                # car FER ne fournit pas de deadline explicite
+                if pub:
+                    from datetime import datetime, timedelta
+                    try:
+                        pub_date = datetime.strptime(pub, "%Y-%m-%d").date()
+                        if pub_date < (datetime.now().date() - timedelta(days=180)):
+                            continue  # Publication trop ancienne
+                    except (ValueError, TypeError):
+                        pass
+
                 items.append(self.make_item(
                     title=title[:255],
                     institution=self.source_name,
