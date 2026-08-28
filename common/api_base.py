@@ -11,6 +11,7 @@ le DAO (`dao_url`) est conservé, jamais le fichier lui-même.
 """
 import logging
 import time
+from datetime import date, datetime, timedelta
 
 import requests
 
@@ -92,6 +93,34 @@ class ApiScraper:
         best = max(candidates, key=cls._score)
         return " ".join(best.split())
 
+    @staticmethod
+    def _validate_publication_date(pub_date: str | None) -> str | None:
+        """Valide et nettoie publication_date : rejette les dates farfelues dans le futur.
+
+        Problème résolu : certains scrapers (notamment plan_passation) récupèrent
+        des dates de PLANIFICATION (2028, 2029, 2036…) au lieu de dates de
+        publication réelles. Ces dates futures corrompaient le tri frontend
+        "Plus récents" et bloquaient les vieux avis en tête en permanence.
+
+        Règle : si publication_date > aujourd'hui + 365 jours, c'est probablement
+        une date de planification/lancement futur (pas une publication) → on la
+        rejette et on retourne None. Le backend/frontend utiliseront alors
+        collected_at (date d'ajout dans le système) pour le tri et l'affichage.
+        """
+        if not pub_date:
+            return None
+        try:
+            d = datetime.fromisoformat(str(pub_date)[:10]).date()
+            threshold = date.today() + timedelta(days=365)
+            if d > threshold:
+                # Date trop loin dans le futur → probablement une date de
+                # planification (datelancement d'un PPM) et non une publication.
+                return None
+            return pub_date
+        except (ValueError, TypeError):
+            # Date non parsable → on la rejette par sécurité.
+            return None
+
     def make_item(self, title: str, institution: str, source_url: str,
                   reference: str | None = None, location: str | None = None,
                   estimated_amount: str | None = None, deadline: str | None = None,
@@ -106,7 +135,7 @@ class ApiScraper:
             "location": (location[:255] if location else None),
             "estimated_amount": estimated_amount,
             "deadline": deadline,
-            "publication_date": publication_date,
+            "publication_date": self._validate_publication_date(publication_date),
             "nb_lots": nb_lots,
             "country": self.country,
             "type": tender_type or self.tender_type,
