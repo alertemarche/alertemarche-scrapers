@@ -16,6 +16,7 @@ du pays bénéficiaire (`ungm_country_id`) pour l'instancier pour le Bénin, le
 Togo ou la Côte d'Ivoire.
 """
 import logging
+import re
 from datetime import datetime
 
 from bs4 import BeautifulSoup
@@ -26,8 +27,9 @@ logger = logging.getLogger("scrapers.ungm")
 
 SEARCH_URL = "https://www.ungm.org/Public/Notice/Search"
 NOTICE_URL = "https://www.ungm.org/Public/Notice/{id}"
-PAGE_SIZE = 50
-MAX_PAGES = 10  # garde-fou
+NOTICE_PAGE_URL = "https://www.ungm.org/Public/Notice"
+PAGE_SIZE = 15   # UNGM impose exactement 15 (valeur par defaut de son UI) ; toute autre valeur => 400
+MAX_PAGES = 20  # 15 avis/page => jusqu-a 300 avis/pays (la boucle s-arrete des qu-une page est vide)
 
 # Identifiants UNGM des pays bénéficiaires (capturés depuis le portail
 # https://www.ungm.org/Public/Notice — attribut value des options du pays).
@@ -62,6 +64,33 @@ class UngmScraper(ApiScraper):
                            "(KHTML, like Gecko) Chrome/120.0 Safari/537.36"),
         })
 
+    _csrf_token: str | None = None
+
+    def _fetch_token(self) -> str | None:
+        """Récupère un jeton anti-CSRF valide auprès d'UNGM.
+
+        UNGM (ASP.NET Core) exige désormais l'en-tête `RequestVerificationToken`
+        sur le POST de recherche, sans quoi le serveur répond « 400 Bad Request ».
+        Subtilité : le jeton contenu dans la 1re réponse GET n'est PAS apparié au
+        cookie anti-forgery (absent de la requête initiale). Il faut donc un 2e
+        GET — le cookie étant alors présent dans la session — pour obtenir un
+        jeton réellement valide.
+        """
+        token = None
+        for _ in range(2):
+            try:
+                r = self.session.get(NOTICE_PAGE_URL, timeout=45)
+                m = re.search(
+                    r'name="__RequestVerificationToken"[^>]*value="([^"]+)"',
+                    r.text,
+                )
+                if m:
+                    token = m.group(1)
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("[%s] UNGM jeton CSRF échec : %s",
+                               self.country, exc)
+        return token
+
     # ---- Réseau -------------------------------------------------------
     def _search_page(self, page: int) -> str | None:
         """POST de recherche pour une page. Retourne le fragment HTML ou None."""
@@ -76,12 +105,18 @@ class UngmScraper(ApiScraper):
             "SortField": "Deadline", "SortAscending": True,
             "IsActive": True, "TypeOfCompetitions": [],
         }
+        if not self._csrf_token:
+            self._csrf_token = self._fetch_token()
         for attempt in range(1, 4):
             try:
-                resp = self.session.post(SEARCH_URL, json=payload, timeout=45)
+                headers = {"RequestVerificationToken": self._csrf_token or ""}
+                resp = self.session.post(SEARCH_URL, json=payload,
+                                         headers=headers, timeout=45)
                 resp.raise_for_status()
                 return resp.text
             except Exception as exc:  # noqa: BLE001
+                # Jeton peut-être expiré/invalide : on le régénère avant de réessayer.
+                self._csrf_token = self._fetch_token()
                 logger.warning("[%s] UNGM recherche p.%s échec %s/3 : %s",
                                self.country, page, attempt, exc)
         return None

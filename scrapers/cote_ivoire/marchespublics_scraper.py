@@ -59,13 +59,15 @@ class MarchesPublicsCiScraper(HtmlScraper):
             deadline = self.parse_fr_date(cells[5].get_text(" ", strip=True))
             if not title or len(title) < 6:
                 continue
+            # Ne conserver que les marchés ACTIFS : le portail national CI sert
+            # l'intégralité de l'archive historique (des milliers d'AO expirés).
+            # On rejette tout marché dont la date limite est dépassée afin de ne
+            # pas polluer le site avec des opportunités mortes.
+            if deadline and not self.is_active(deadline):
+                continue
             # Montant estimatif si présent dans la ligne (colonne facultative
             # selon les mises à jour du portail).
             amount = self.amount_from_text(row.get_text(" ", strip=True))
-
-            # Ne garder que les marchés actifs (deadline future ou absente)
-            if not self.is_active(deadline):
-                continue
 
             external_id = f"mpci-{reference}" if reference else None
             key = external_id or (title[:60] + "|" + (deadline or ""))
