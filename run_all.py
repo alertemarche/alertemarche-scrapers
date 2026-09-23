@@ -76,6 +76,7 @@ from scrapers.senegal.bad_scraper import build as build_sn_bad
 from scrapers.senegal.ue_delegation_scraper import build as build_sn_ue_delegation
 from scrapers.senegal.boad_scraper import build as build_sn_boad
 from scrapers.senegal.senoffre_scraper import build as build_sn_senoffre
+from scrapers.senegal.bceao_scraper import build as build_sn_bceao
 from scrapers.burkina_faso.scraper import build as build_bf
 from scrapers.burkina_faso.plan_passation_scraper import build as build_bf_ppm
 from scrapers.burkina_faso.ungm_scraper import build as build_bf_ungm
@@ -158,7 +159,7 @@ BUILDERS = {
         build_sn_senelec, build_sn_pad, build_sn_ageroute, build_sn_artp,
         # Bailleurs internationaux (marchés privés).
         build_sn_ungm, build_sn_banque_mondiale, build_sn_pnud,
-        build_sn_bad, build_sn_boad,
+        build_sn_bad, build_sn_boad, build_sn_bceao,
         # ONG internationales et représentations diplomatiques.
         build_sn_ue_delegation,
     ],
