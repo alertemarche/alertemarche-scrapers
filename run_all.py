@@ -46,6 +46,8 @@ from scrapers.cote_ivoire.ageroute_scraper import build as build_ci_ageroute
 from scrapers.cote_ivoire.fer_scraper import build as build_ci_fer
 from scrapers.cote_ivoire.pnud_scraper import build as build_ci_pnud
 from scrapers.cote_ivoire.bad_scraper import build as build_ci_bad
+from scrapers.cote_ivoire.ue_delegation_scraper import build as build_ci_ue_delegation
+from scrapers.cote_ivoire.bceao_scraper import build as build_ci_bceao
 from scrapers.togo.scraper import build as build_togo
 from scrapers.togo.arcop_scraper import build as build_tg_arcop
 from scrapers.togo.cnct_scraper import build as build_tg_cnct
@@ -139,6 +141,8 @@ BUILDERS = {
         # Bailleurs internationaux (marchés privés).
         build_ci_ungm, build_ci_banque_mondiale, build_ci_afd,
         build_ci_pnud, build_ci_bad,
+        # Institution financière régionale (agence d'Abidjan) + Délégation UE.
+        build_ci_bceao, build_ci_ue_delegation,
         # Plateforme privée d'appels d'offres (ONG, entreprises, cabinets).
         build_ci_educarriere,
     ],

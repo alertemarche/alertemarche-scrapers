@@ -29,6 +29,18 @@ class CoteIvoireScraper(BaseScraper):
                 urls.append(u)
         return urls
 
+    def parse(self, html: str, page_url: str) -> list[dict]:
+        """Filtre les faux-actifs de l'accueil ANRMP.
+
+        La page d'accueil de l'ANRMP mélange actualités, archives et liens de
+        navigation captés par l'heuristique générique — presque toujours sans
+        échéance. Ces avis non datés étaient affichés comme « actifs » pendant
+        90 jours (faux-actifs). On ne conserve donc que les avis réellement
+        datés (échéance détectée), qui sont les seuls fiables pour cette source.
+        """
+        items = super().parse(html, page_url)
+        return [it for it in items if it.get("deadline")]
+
 
 def build() -> CoteIvoireScraper:
     return CoteIvoireScraper()
