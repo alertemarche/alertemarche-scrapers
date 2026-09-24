@@ -86,6 +86,7 @@ from scrapers.burkina_faso.pnud_scraper import build as build_bf_pnud
 from scrapers.burkina_faso.bad_scraper import build as build_bf_bad
 from scrapers.burkina_faso.boad_scraper import build as build_bf_boad
 from scrapers.burkina_faso.ue_delegation_scraper import build as build_bf_ue_delegation
+from scrapers.burkina_faso.bceao_scraper import build as build_bf_bceao
 
 logging.basicConfig(
     level=getattr(logging, config.LOG_LEVEL, logging.INFO),
@@ -172,7 +173,7 @@ BUILDERS = {
         build_bf_ppm,   # Plans de Passation des Marchés (PPM)
         # Bailleurs internationaux (marchés privés).
         build_bf_ungm, build_bf_banque_mondiale, build_bf_afd,
-        build_bf_pnud, build_bf_bad, build_bf_boad,
+        build_bf_pnud, build_bf_bad, build_bf_boad, build_bf_bceao,
         # ONG internationales et représentations diplomatiques.
         build_bf_ue_delegation,
     ],
