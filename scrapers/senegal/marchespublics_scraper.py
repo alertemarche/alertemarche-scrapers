@@ -1,15 +1,23 @@
 """
 Scraper pour le portail national des marchés publics du Sénégal
 https://www.marchespublics.sn/
+
+⚠️ IMPORTANT : Ce portail est géo-bloqué (accessible uniquement depuis le Sénégal).
+Le scraper DOIT utiliser un proxy sénégalais (Webshare SN) pour fonctionner.
+Configuration : voir variables SENEGAL_PROXY_* dans .env
 """
 import logging
+import os
 import re
 from urllib.parse import urljoin
 from common.html_base import HtmlScraper
 
 
 class MarchesPublicsSnScraper(HtmlScraper):
-    """Scraper pour marchespublics.sn - Portail national Sénégal"""
+    """Scraper pour marchespublics.sn - Portail national Sénégal
+    
+    Utilise obligatoirement un proxy IP sénégalais pour contourner le géo-blocage.
+    """
     
     BASE_URL = "https://www.marchespublics.sn"
     
@@ -18,6 +26,20 @@ class MarchesPublicsSnScraper(HtmlScraper):
         self.country = "SN"
         self.source_name = "Marchés Publics Sénégal (Portail National)"
         self.tender_type = "public"
+        
+        # Proxy sénégalais dédié (via Webshare avec géo-ciblage SN)
+        sn_user = os.getenv("SENEGAL_PROXY_USER") or os.getenv("WEBSHARE_PROXY_USER", "")
+        sn_pass = os.getenv("SENEGAL_PROXY_PASS") or os.getenv("WEBSHARE_PROXY_PASS", "")
+        sn_host = os.getenv("SENEGAL_PROXY_HOST", "p.webshare.io")
+        sn_port = os.getenv("SENEGAL_PROXY_PORT", "80")
+        
+        if sn_user and sn_pass:
+            proxy_url = f"http://{sn_user}:{sn_pass}@{sn_host}:{sn_port}"
+            self.session.proxies.update({"http": proxy_url, "https": proxy_url})
+            logging.info(f"[{self.source_name}] Proxy sénégalais activé : {sn_host}:{sn_port}")
+        else:
+            logging.warning(f"[{self.source_name}] AUCUN proxy sénégalais configuré — "
+                            "le portail sera probablement injoignable (géo-bloqué).")
     
     def collect(self):
         """Collect tenders from the national portal"""
