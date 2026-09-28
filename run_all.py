@@ -38,6 +38,7 @@ from scrapers.benin.armp_scraper import build as build_armp_bj
 from scrapers.cote_ivoire.scraper import build as build_ci
 from scrapers.cote_ivoire.arcop_scraper import build as build_ci_arcop
 from scrapers.cote_ivoire.marchespublics_scraper import build as build_ci_marchespublics
+from scrapers.cote_ivoire.plan_passation_scraper import build as build_ci_plan_passation
 from scrapers.cote_ivoire.ungm_scraper import build as build_ci_ungm
 from scrapers.cote_ivoire.banque_mondiale_scraper import build as build_ci_banque_mondiale
 from scrapers.cote_ivoire.afd_scraper import build as build_ci_afd
@@ -139,6 +140,8 @@ BUILDERS = {
         build_ci,
         # Sources publiques nationales (portail + institutions d'État).
         build_ci_marchespublics, build_ci_arcop,
+        # Plans de Passation des Marchés (PPM) de tous les ministères (PDF DGMP).
+        build_ci_plan_passation,
         build_ci_ageroute, build_ci_fer,
         # Bailleurs internationaux (marchés privés).
         build_ci_ungm, build_ci_banque_mondiale, build_ci_afd,
