@@ -118,6 +118,12 @@ class PlanPassationCiScraper(HtmlScraper):
             return items
 
         for page in doc:
+            # Lien direct vers la bonne page du PDF (ex: "#page=4").
+            # Quand l'utilisateur clique « Voir la source », son lecteur PDF
+            # ouvre directement la page exacte — ~21 marchés à parcourir max.
+            page_num = page.number + 1          # numérotation humaine (1-based)
+            page_url = f"{source_url}#page={page_num}"
+
             try:
                 tabs = page.find_tables()
             except Exception:  # noqa: BLE001
@@ -131,7 +137,7 @@ class PlanPassationCiScraper(HtmlScraper):
                 if not any(h in header for h in self.HEADER_HINTS):
                     continue
                 for row in rows[1:]:
-                    item = self._map_row(row, source_url)
+                    item = self._map_row(row, page_url)
                     if item:
                         items.append(item)
         doc.close()
